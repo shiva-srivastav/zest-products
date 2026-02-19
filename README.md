@@ -141,9 +141,12 @@ mvn spring-boot:run
 ```
 
 Backend starts at http://localhost:8080
+Production Backend URL: https://zest-products.onrender.com
 
 Swagger UI: http://localhost:8080/swagger-ui.html
+Swagger Production UI: https://zest-products.onrender.com/swagger-ui/index.html
 
+actuator Production URL: https://zest-products.onrender.com/actuator/health
 ### Frontend Setup
 
 ```bash
@@ -153,6 +156,7 @@ npm run dev
 ```
 
 Frontend starts at http://localhost:5173
+Production Frontend URL: https://zest-products-frontend.onrender.com/
 
 ---
 
@@ -199,6 +203,134 @@ Tests use H2 in-memory database (no MySQL needed). Coverage includes:
 
 ---
 
+## Production Deployment
+
+### Architecture
+
+```
+GitHub Repo
+├── backend/   →   Render.com   (Spring Boot API)
+└── frontend/  →   Vercel/Render      (React Vite)
+                       ↕
+                   Aiven.io     (MySQL database)
+```
+
+### Step 1 — Push to GitHub
+
+```bash
+git add .
+git commit -m "your message"
+git push origin main
+```
+
+### Step 2 — Deploy Spring Boot Backend on Render (Docker)
+
+1. Go to **render.com** → **New** → **Web Service**
+2. Connect your GitHub repository
+3. Select:
+
+| Field                          | Value                |
+| ------------------------------ | -------------------- |
+| Runtime                        | `Docker`             |
+| Branch                         | `main`               |
+| Root Directory                 | `backend`            |
+| Dockerfile Path                | `backend/Dockerfile` |
+| Docker Build Context Directory | `backend`            |
+| Auto-Deploy                    | `On Commit`          |
+| Instance Type                  | `Free`               |
+
+4. Add Environment Variables (Render → Environment → Add):
+
+| Key                      | Value                                                                                        |
+| ------------------------ | -------------------------------------------------------------------------------------------- |
+| `SPRING_PROFILES_ACTIVE` | `production`                                                                                 |
+| `DB_URL`                 | `jdbc:mysql://YOUR_AIVEN_HOST:PORT/defaultdb?useSSL=true&requireSSL=true&serverTimezone=UTC` |
+| `DB_USERNAME`            | `avnadmin`                                                                                   |
+| `DB_PASSWORD`            | `your-aiven-password`                                                                        |
+| `JWT_SECRET`             | `your-long-random-secret`                                                                    |
+
+5. Set Health Check (Recommended)
+
+Render → Settings → Health Checks:
+
+| Field             | Value              |
+| ----------------- | ------------------ |
+| Health Check Path | `/actuator/health` |
+
+6. Click **Create Web Service**
+
+---
+
+### Verify Deployment
+
+After deploy, test:
+
+* `https://zest-products.onrender.com/actuator/health` → should return `{"status":"UP"}`
+* `https://zest-products.onrender.com/swagger-ui/index.html` → Swagger UI (Springdoc)
+
+---
+
+### Required Dockerfile (backend/Dockerfile)
+
+Make sure you have a Dockerfile like this inside `backend/`:
+
+```dockerfile
+# Build stage
+FROM maven:3.9.6-eclipse-temurin-21 AS build
+WORKDIR /app
+COPY . .
+RUN mvn -DskipTests clean package
+
+# Run stage
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java","-jar","app.jar"]
+```
+
+### Step 3 — Deploy Frontend on Vercel
+
+1. Go to **vercel.com** → Add New → Project
+2. Import your GitHub repository
+3. Set the following:
+
+| Field | Value |
+|---|---|
+| Root Directory | `frontend` |
+| Framework Preset | `Vite` |
+| Build Command | `npm run build` |
+| Output Directory | `dist` |
+
+4. Add Environment Variable:
+
+| Key | Value |
+|---|---|
+| `VITE_API_BASE_URL` | `https://zest-products.onrender.com/` |
+
+5. Click **Deploy**
+
+---
+
+## Environment Variables Reference
+
+### Backend (Render.com)
+
+| Variable | Required | Description |
+|---|---|---|
+| `SPRING_PROFILES_ACTIVE` | Yes | Set to `production` |
+| `DB_URL` | Yes | Full JDBC MySQL connection URL |
+| `DB_USERNAME` | Yes | Database username |
+| `DB_PASSWORD` | Yes | Database password |
+| `JWT_SECRET` | Yes | Secret key for signing JWT tokens |
+| `PORT` | No | Default 8080 |
+
+### Frontend (Vercel)
+
+| Variable | Required | Description |
+|---|---|---|
+| `VITE_API_BASE_URL` | Yes | Backend URL, no trailing slash |
+
 ## Free Hosting Options
 
 ### Backend — Railway.app (recommended)
@@ -212,15 +344,13 @@ Tests use H2 in-memory database (no MySQL needed). Coverage includes:
 1. Go to https://render.com
 2. Create a new "Web Service"
 3. Connect your GitHub repo, set root to `backend`
-4. Set build command: `mvn clean package -DskipTests`
-5. Set start command: `java -jar target/*.jar`
-6. Add a PostgreSQL database add-on
+
 
 ### Frontend — Vercel (recommended)
 1. Go to https://vercel.com
 2. Import your GitHub repository
 3. Set root directory to `frontend`
-4. Set environment variable: `VITE_API_BASE_URL=https://your-backend-url`
+4. Set environment variable: `VITE_API_BASE_URL=https://zest-products.onrender.com/`
 5. Deploy
 
 ### Frontend — Netlify

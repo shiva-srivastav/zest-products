@@ -8,27 +8,37 @@ Full-stack REST API solution for Product management built with Java Spring Boot 
 
 ```
 zest-products/
-├── backend/                    # Spring Boot REST API
-│   ├── src/main/java/com/zestindia/products/
-│   │   ├── config/             # Security, CORS, Swagger, Async, JPA
-│   │   ├── controller/         # AuthController, ProductController
-│   │   ├── dto/                # Request and Response DTOs
-│   │   ├── entity/             # JPA entities (User, Product, Item, RefreshToken)
-│   │   ├── exception/          # Global exception handling
-│   │   ├── repository/         # Spring Data JPA repositories
-│   │   ├── security/           # JWT provider, filter, UserDetailsService
-│   │   └── service/            # Business logic layer
+├── backend/
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/com/zestindia/products/
+│   │   │   │   ├── config/          # Security, CORS, Swagger, Async
+│   │   │   │   ├── controller/      # AuthController, ProductController
+│   │   │   │   ├── dto/             # Request and Response DTOs
+│   │   │   │   ├── entity/          # User, Product, Item, RefreshToken
+│   │   │   │   ├── exception/       # Global exception handling
+│   │   │   │   ├── repository/      # JPA repositories
+│   │   │   │   ├── security/        # JWT filter, provider, UserDetailsService
+│   │   │   │   └── service/         # Business logic
+│   │   │   └── resources/
+│   │   │       ├── application.yml              # Local dev config
+│   │   │       ├── application-production.yml   # Production config (Render)
+│   │   │       └── application-test.yml         # Test config (H2)
+│   │   └── test/                    # Unit + Integration tests
 │   ├── Dockerfile
 │   └── pom.xml
-├── frontend/                   # React Vite frontend
+├── frontend/
 │   ├── src/
-│   │   ├── api/                # Axios client with interceptors
-│   │   ├── components/         # Layout, Sidebar, ProtectedRoute
-│   │   ├── context/            # AuthContext with JWT management
-│   │   └── pages/              # Login, Register, Dashboard, Products, ProductDetail
+│   │   ├── api/                     # Axios instance, auth, products API
+│   │   ├── components/              # Layout, Sidebar, ProtectedRoute
+│   │   ├── context/                 # AuthContext
+│   │   ├── pages/                   # Login, Register, Dashboard, Products, ProductDetail
+│   │   └── styles/                  # Global CSS variables and dark theme
+│   ├── Dockerfile
 │   ├── nginx.conf
-│   └── Dockerfile
-└── docker-compose.yml
+│   └── package.json
+├── docker-compose.yml
+└── push-to-dockerhub.sh
 ```
 
 ---
@@ -86,6 +96,13 @@ zest-products/
 - `sortDir` - asc or desc
 
 ---
+## Spring Profiles
+
+| Profile | Config File | Used When |
+|---|---|---|
+| default | `application.yml` | Local development |
+| production | `application-production.yml` | Render.com deployment |
+| test | `application-test.yml` | Running tests |
 
 ## Local Development Setup
 

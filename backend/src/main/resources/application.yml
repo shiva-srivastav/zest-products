@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: zest-products-api
+
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/zestdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    database-platform: org.hibernate.dialect.MySQLDialect
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: ${PORT:8080}
+  servlet:
+    context-path: /
+
+jwt:
+  secret: ${JWT_SECRET:zestindia-super-secret-key-for-jwt-authentication-2024}
+  expiration: 3600000
+  refresh-expiration: 86400000
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: alpha
+    tagsSorter: alpha
+
+logging:
+  level:
+    com.zestindia: DEBUG
+    org.springframework.security: WARN

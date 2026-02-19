@@ -10,7 +10,6 @@ import com.zestindia.products.entity.User;
 import com.zestindia.products.exception.BadRequestException;
 import com.zestindia.products.repository.UserRepository;
 import com.zestindia.products.security.JwtTokenProvider;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -22,10 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
@@ -37,6 +34,17 @@ public class AuthServiceImpl implements AuthService {
 
     @Value("${jwt.expiration}")
     private Long jwtExpiration;
+
+    public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                           JwtTokenProvider jwtTokenProvider, AuthenticationManager authenticationManager,
+                           UserDetailsService userDetailsService, RefreshTokenService refreshTokenService) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtTokenProvider = jwtTokenProvider;
+        this.authenticationManager = authenticationManager;
+        this.userDetailsService = userDetailsService;
+        this.refreshTokenService = refreshTokenService;
+    }
 
     @Override
     @Transactional
@@ -53,7 +61,7 @@ public class AuthServiceImpl implements AuthService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
-                .roles(Set.of(Role.ROLE_USER))
+                .role(Role.ROLE_USER)
                 .enabled(true)
                 .build();
 
@@ -79,7 +87,6 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new BadRequestException("User not found"));
 
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getUsername());
-
         return buildAuthResponse(accessToken, refreshToken.getToken(), user);
     }
 
@@ -91,7 +98,6 @@ public class AuthServiceImpl implements AuthService {
         User user = refreshToken.getUser();
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
         String newAccessToken = jwtTokenProvider.generateToken(userDetails);
-
         RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user.getUsername());
 
         return buildAuthResponse(newAccessToken, newRefreshToken.getToken(), user);
@@ -112,7 +118,7 @@ public class AuthServiceImpl implements AuthService {
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
-                .roles(user.getRoles().stream().map(Enum::name).collect(Collectors.toSet()))
+                .roles(Set.of(user.getRole().name()))
                 .build();
     }
 }

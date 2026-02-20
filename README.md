@@ -498,8 +498,26 @@ You can manually trigger the workflow:
 
 ### Verify It Is Working
 
-Go to:
 
-GitHub → Actions → Keep Render Awake
+## Keeping Render Backend Awake (cron-job.org)
 
-You should see workflow runs every 5 minutes.
+Render Free tier can sleep after inactivity, causing cold starts when opening Swagger or hitting APIs. To reduce this, we use **cron-job.org** to ping the backend periodically.
+
+### Job Details
+
+* **Service:** cron-job.org
+* **Purpose:** Keep backend warm (reduce cold starts)
+* **Ping URL:**
+  `https://zest-products.onrender.com/actuator/health`
+  *(If actuator is secured, use `https://zest-products.onrender.com/` instead.)*
+* **Interval:** Every 5 minutes (recommended)
+
+### Job History
+
+* Monitor history can be checked here:
+  `https://console.cron-job.org/jobs/7293521/history`
+
+### Notes
+
+* If the backend returns `401/403` for `/actuator/health`, make the endpoint public or switch the ping URL to `/`.
+* cron-job.org is generally more reliable than some uptime monitors for Render Free apps.

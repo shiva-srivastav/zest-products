@@ -5,19 +5,10 @@ on:
     - cron: "*/5 * * * *"   # every 5 minutes (UTC)
   workflow_dispatch:
 
-permissions:
-  contents: read
-
-concurrency:
-  group: keep-render-awake
-  cancel-in-progress: true
-
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Render Backend
         run: |
-          echo "Time (UTC): $(date -u)"
-          curl -sS -m 20 -L -o /dev/null -w "HTTP %{http_code}\n" \
-            https://zest-products.onrender.com/actuator/health
+          curl -sS -m 20 -L https://zest-products.onrender.com/actuator/health

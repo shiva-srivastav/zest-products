@@ -2,15 +2,22 @@ name: Keep Render Awake
 
 on:
   schedule:
-    - cron: "*/1 * * * *"   # every 1 minutes (UTC)
+    - cron: "*/5 * * * *"   # every 5 minutes (UTC)
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keep-render-awake
+  cancel-in-progress: true
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping backend health endpoint
+      - name: Ping Render Backend
         run: |
-          curl -sS -m 20 -L \
-            -H "User-Agent: keep-awake-bot" \
+          echo "Time (UTC): $(date -u)"
+          curl -sS -m 20 -L -o /dev/null -w "HTTP %{http_code}\n" \
             https://zest-products.onrender.com/actuator/health

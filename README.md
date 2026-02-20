@@ -431,3 +431,75 @@ CREATE TABLE refresh_tokens (
   expiry_date TIMESTAMP NOT NULL
 );
 ```
+
+## Keeping Render Backend Awake (GitHub Actions)
+
+Since Render Free tier sleeps after inactivity, this repository includes a GitHub Action that automatically pings the backend every 5 minutes to reduce cold starts.
+
+### How It Works
+
+GitHub Actions runs a scheduled workflow that calls:
+
+```
+https://zest-products.onrender.com/actuator/health
+```
+
+This prevents the service from going idle.
+
+---
+
+### Workflow File Location
+
+```
+.github/workflows/keep-render-awake.yml
+```
+
+---
+
+### Workflow Configuration
+
+```yaml
+name: Keep Render Awake
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"   # every 5 minutes (UTC)
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render Backend
+        run: |
+          curl -sS -m 20 -L https://zest-products.onrender.com/actuator/health
+```
+
+---
+
+### Manual Trigger (Optional)
+
+You can manually trigger the workflow:
+
+1. Go to GitHub → Actions
+2. Click "Keep Render Awake"
+3. Click "Run workflow"
+
+---
+
+### Important Notes
+
+* The cron schedule runs in UTC timezone.
+* Ensure `/actuator/health` is publicly accessible.
+* Render Free tier may still occasionally sleep depending on platform policy.
+* For guaranteed uptime, upgrade to Render Starter plan.
+
+---
+
+### Verify It Is Working
+
+Go to:
+
+GitHub → Actions → Keep Render Awake
+
+You should see workflow runs every 5 minutes.
